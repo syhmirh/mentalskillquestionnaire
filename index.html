@@ -138,6 +138,7 @@
     font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--chalk);
   }
   .section-top{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px;}
+  .domain-name{font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); margin-bottom:6px;}
 
   .item{margin-bottom:28px;}
   .item:last-child{margin-bottom:4px;}
@@ -634,6 +635,34 @@ async function renderCoach(){
   });
 }
 
+function scoreColor(n){
+  if(n <= 2) return "var(--low)";
+  if(n === 3) return "var(--mid)";
+  return "var(--high)";
+}
+
+function renderAnswerDetail(sub){
+  return DOMAINS.map(d=>{
+    const itemsHtml = d.items.map((text,i)=>{
+      const val = sub.answers[itemId(d.key,i)];
+      const shown = (typeof val === "number") ? val : "&mdash;";
+      const color = (typeof val === "number") ? scoreColor(val) : "var(--sage)";
+      return `
+        <div style="display:flex; justify-content:space-between; gap:14px; padding:8px 0; border-bottom:1px solid var(--line);">
+          <span style="font-size:13.5px; line-height:1.4;">${escapeHtml(text)}</span>
+          <span style="flex:none; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; color:#1B2416; background:${color};">${shown}</span>
+        </div>
+      `;
+    }).join("");
+    return `
+      <div style="margin-bottom:18px;">
+        <div class="domain-name" style="margin-bottom:2px;">${d.name}</div>
+        ${itemsHtml}
+      </div>
+    `;
+  }).join("");
+}
+
 function openDetailModal(sub){
   const band = bandFor(sub.overall);
   const backdrop = document.createElement("div");
@@ -644,6 +673,9 @@ function openDetailModal(sub){
       <h2 style="margin-bottom:4px;">${escapeHtml(sub.name)}</h2>
       <p class="lede" style="margin-bottom:18px;">${escapeHtml(sub.sport)||"No sport listed"} &middot; ${new Date(sub.submittedAt).toLocaleDateString()} &middot; Overall <strong style="color:${band.color};">${sub.overall.toFixed(1)}</strong></p>
       ${renderBarRows(sub.domainScores)}
+      <div class="header-rule"></div>
+      <h2 style="margin-bottom:14px;">Question-by-Question</h2>
+      ${renderAnswerDetail(sub)}
       <div class="row" style="justify-content:flex-end;">
         <button class="btn btn-ghost" id="closeModal">Close</button>
       </div>
